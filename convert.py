@@ -3,7 +3,7 @@ import re
 from pycantonese import characters_to_jyutping
 
 input_path = "output_file.txt"
-output_path = "output_file.html"
+output_path = "index.html"
 
 
 def remove_english_from_japanese(text):
