@@ -11,21 +11,13 @@ def remove_english_from_japanese(text):
 
 
 def convert_sentence_with_jyutping(sentence):
-    result = ""
+    chars = []
+    jyuts = []
     for char, jyut in characters_to_jyutping(sentence):
-        if jyut:
-            result += (
-                f"<span class='char-with-rt'>"
-                f"<span class='base-char'>{char}</span>"
-                f"<span class='under-rt'>{jyut}</span>"
-                f"</span>"
-            )
-        else:
-            result += f"<span class='char-with-rt'>"
-            result += f"<span class='base-char'>{char}</span>"
-            result += f"<span class='under-rt'>&nbsp;</span>"
-            result += f"</span>"
-    return result
+        chars.append(char)
+        jyuts.append(jyut if jyut else " ")
+
+    return "".join(chars), " ".join(jyuts)
 
 
 def extract_word_and_example(cols):
@@ -38,12 +30,15 @@ def extract_word_and_example(cols):
     chinese_part = match.group(1).strip() if match else example
     jp_translation = match.group(2).strip() if match and match.group(2) else ""
 
-    chinese_part_with_jyutping = convert_sentence_with_jyutping(chinese_part)
+    hanzi, jyut = convert_sentence_with_jyutping(chinese_part)
 
+    # HTML構造をしっかり分離
     example_html = (
-        f"{chinese_part_with_jyutping}<br>{jp_translation}"
-        if jp_translation
-        else chinese_part_with_jyutping
+        f"<div class='example-block'>"
+        f"<div class='hanzi'>{hanzi}</div>"
+        f"<div class='jyutping-line'>{jyut}</div>"
+        f"<div class='translation'>{jp_translation}</div>"
+        f"</div>"
     )
 
     return word, jp_meaning, jyutping, example_html
@@ -65,16 +60,16 @@ if __name__ == "__main__":
 
     html_parts = [
         """<!DOCTYPE html>
-<html lang=\"ja\">
+<html lang="ja">
 <head>
-    <meta charset=\"UTF-8\">
-    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>広東語 単語リスト</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 2rem; color: #111; }
         .section { margin-bottom: 3rem; }
         .section-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #555; }
-        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; table-layout: fixed; }
+        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; table-layout: auto; }
         th, td {
             padding: 0.75rem 1rem;
             border-bottom: 1px solid #eee;
@@ -82,117 +77,192 @@ if __name__ == "__main__":
             vertical-align: middle;
         }
         th:first-child, td:first-child {
-            width: 180px;
+            width: 30px;
+            color: #888;
+            font-size: 0.8rem;
+        }
+        td:nth-child(2) {
             font-weight: bold;
             color: #e11d48;
             white-space: nowrap;
             font-size: 1.5rem;
-            line-height: 1.2;
         }
-        td:nth-child(2) { color: #555; }
-        td:nth-child(3) {
+        td:nth-child(3) { color: #555; }
+        td:nth-child(4) {
             width: 50%;
             color: #333;
             font-size: 1.1rem;
-            line-height: 1.6;
         }
         .jyutping {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: #e11d48;
             display: block;
             margin-top: 0.2rem;
         }
+        .jyutping-line {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.2rem;
+            letter-spacing: 1px;
+        }
+        .translation {
+            margin-top: 0.3rem;
+            font-size: 1rem;
+            color: #333;
+        }
+        .example-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
         .audio-player { margin-bottom: 1rem; }
         .search-bar { margin-bottom: 2rem; width: 100%; }
-        input[type=\"text\"] { padding: 16px; width: -webkit-fill-available; border: 0.5px solid #ccc; border-radius: 6px; font-size: 1.2rem; }
+        input[type="text"] { padding: 16px; width: -webkit-fill-available; border: 0.5px solid #ccc; border-radius: 6px; font-size: 1.2rem; }
         .section-header {
             display: flex;
             align-items: center;
             gap: 1rem;
             margin-bottom: 1rem;
         }
-        ruby { ruby-position: over; }
-        rt {
-            font-size: 0.7em;
-            line-height: 1.4;
-            padding-top: 2px;
-            color: #666;
-            font-weight: normal;
+        .audio-button {
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.2rem;
+            color: #e11d48;
+            transition: transform 0.2s;
         }
-        .char-with-rt {
-            display: inline-block;
-            text-align: center;
-            margin: 0 1px;
+        .audio-button:hover {
+            transform: scale(1.2);
         }
-        .base-char { display: block; font-size: 1.1rem; }
-        .under-rt { display: block; font-size: 0.7rem; color: #666; margin-top: 2px; }
-        .plain-char { display: inline-block; font-size: 1.1rem; margin: 0 1px; }
+        .audio-text {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .audio-text > div {
+            flex: 1;
+        }
+
+        @media print {
+            body {
+                background: white;
+                margin: 0.5cm;
+                font-size: 10pt;
+                line-height: 1.2;
+            }
+
+            .search-bar,
+            .audio-player,
+            .custom-audio-button,
+            .audio-button,
+            .section-header audio,
+            button,
+            a[href$=".zip"] {
+                display: none !important;
+            }
+
+            .section {
+                margin-bottom: 1rem;
+            }
+
+            /* 印刷のときだけページの下で途切れないように */
+            tr, td {
+                page-break-inside: avoid;
+            }
+        }
+
+
     </style>
     <script>
         function filterEntries() {
-            const keyword = document.getElementById(\"search\").value.toLowerCase();
-            const sections = document.querySelectorAll(\".section\");
+            const keyword = document.getElementById("search").value.toLowerCase();
+            const sections = document.querySelectorAll(".section");
             sections.forEach(section => {
-                const rows = section.querySelectorAll(\"tbody tr\");
+                const rows = section.querySelectorAll("tbody tr");
                 let visibleCount = 0;
                 rows.forEach(row => {
                     const text = row.innerText.toLowerCase();
                     const match = text.includes(keyword);
-                    row.style.display = match ? \"\" : \"none\";
+                    row.style.display = match ? "" : "none";
                     if (match) visibleCount++;
                 });
-                section.style.display = visibleCount > 0 ? \"\" : \"none\";
+                section.style.display = visibleCount > 0 ? "" : "none";
             });
         }
-        function playAllAudios() {
-            const players = Array.from(document.querySelectorAll(\".audio-player\"));
-            if (players.length === 0) return;
-            let current = 0;
-            const playNext = () => {
-                if (current < players.length) {
-                    const player = players[current];
-                    player.currentTime = 0;
-                    player.play();
-                    player.onended = () => {
-                        current++;
-                        playNext();
+        document.addEventListener("DOMContentLoaded", () => {
+            const audio = new Audio();
+            let currentBtn = null;
+            document.querySelectorAll(".custom-audio-button").forEach(button => {
+                button.addEventListener("click", () => {
+                    const src = button.dataset.src;
+                    if (audio.src !== location.href + src) audio.src = src;
+
+                    if (audio.paused || currentBtn !== button) {
+                        audio.play();
+                        if (currentBtn) currentBtn.classList.remove("playing");
+                        button.classList.add("playing");
+                        currentBtn = button;
+                    } else {
+                        audio.pause();
+                        audio.currentTime = 0;
+                        button.classList.remove("playing");
+                        currentBtn = null;
+                    }
+
+                    audio.onended = () => {
+                        if (currentBtn) currentBtn.classList.remove("playing");
+                        currentBtn = null;
                     };
-                }
-            };
-            playNext();
-        }
+                });
+            });
+        });
     </script>
 </head>
 <body>
-    <div class=\"search-bar\">
-        <input type=\"text\" id=\"search\" oninput=\"filterEntries()\" placeholder=\"単語・読み・意味・例文で検索...\">
+    <div class="search-bar">
+        <input type="text" id="search" oninput="filterEntries()" placeholder="単語・読み・意味・例文で検索...">
     </div>
-    <div style=\"margin-bottom: 1rem;\">
-        <button onclick=\"playAllAudios()\" style=\"padding: 10px 20px; font-size: 1rem;\">🔊 連続再生</button>
+    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+        <a href="download/audio.zip" download style="padding: 10px 20px; font-size: 1rem; background-color: #e11d48; color: white; border-radius: 6px; text-decoration: none;">📥 音声ファイルDL</a>
     </div>"""
     ]
 
+    total_sections = (len(entries) + 9) // 10
+
     for i in range(0, len(entries), 10):
-        section_title = f"Audio #{i // 10 + 1}"
-        audio_file = f"audio/output_batch_{(i) // 10 + 1}.mp3"
+        section_index = i // 10 + 1
+        section_title = f"セクション {section_index}/{total_sections}"
+        audio_file = f"audio/batch/output_batch_{section_index}.mp3"
+
         html_parts.append(f'<div class="section">')
         html_parts.append(
             f"""
     <div class="section-header">
         <div class="section-title">{section_title}</div>
-        <audio class="audio-player" controls src="{audio_file}" data-index="{i // 10}"></audio>
+        <audio class="audio-player" controls src="{audio_file}" data-index="{section_index - 1}"></audio>
     </div>
     """
         )
         html_parts.append(
-            "<table><thead><tr><th>単語・拼音</th><th>日本語訳</th><th>例文</th></tr></thead><tbody>"
+            "<table><thead><tr><th>#</th><th>単語・拼音</th><th>日本語訳</th><th>例文</th></tr></thead><tbody>"
         )
 
-        for word, jp_meaning, jyutping, example_html in entries[i : i + 10]:
+        for j, (word, jp_meaning, jyutping, example_html) in enumerate(entries[i : i + 10]):
+            entry_index = i + j + 1
             word_with_jyutping = f"{word}<span class='jyutping'>{jyutping}</span>"
+            word_audio = f"audio/words/word_{entry_index:03d}.mp3"
+            example_audio = f"audio/examples/example_{entry_index:03d}.mp3"
+
             html_parts.append(
-                f"<tr><td>{word_with_jyutping}</td><td>{jp_meaning}</td><td>{example_html}</td></tr>"
+                f"<tr>"
+                f"<td>{entry_index:03d}</td>"
+                f"<td><div class='audio-text'><button class='audio-button custom-audio-button' data-src='{word_audio}'>🔊</button><div>{word_with_jyutping}</div></div></td>"
+                f"<td>{jp_meaning}</td>"
+                f"<td><div class='audio-text'><button class='audio-button custom-audio-button' data-src='{example_audio}'>🔊</button><div>{example_html}</div></div></td>"
+                f"</tr>"
             )
+
         html_parts.append("</tbody></table></div>")
 
     html_parts.append("</body>\n</html>")
