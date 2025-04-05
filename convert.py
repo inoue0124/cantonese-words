@@ -140,8 +140,11 @@ if __name__ == "__main__":
             align-items: center;
             gap: 0.5rem;
         }
-        .audio-text > div {
-            flex: 1;
+        .audio-buttons-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            margin-right: 0.5rem;
         }
 
         @media print {
@@ -233,17 +236,20 @@ if __name__ == "__main__":
     for i in range(0, len(entries), 10):
         section_index = i // 10 + 1
         section_title = f"セクション {section_index}/{total_sections}"
-        audio_file = f"audio/batch/output_batch_{section_index}.mp3"
+        audio_file_male = f"audio/male/batch/output_batch_{section_index}.mp3"
+        audio_file_female = f"audio/female/batch/output_batch_{section_index}.mp3"
 
         html_parts.append(f'<div class="section">')
         html_parts.append(
             f"""
-    <div class="section-header">
-        <div class="section-title">{section_title}</div>
-        <audio class="audio-player" controls src="{audio_file}" data-index="{section_index - 1}"></audio>
-    </div>
-    """
+        <div class="section-header">
+            <div class="section-title">{section_title}</div>
+            <audio class="audio-player" controls src="{audio_file_male}" title="男性バッチ音声"></audio>
+            <audio class="audio-player" controls src="{audio_file_female}" title="女性バッチ音声"></audio>
+        </div>
+        """
         )
+
         html_parts.append(
             "<table><thead><tr><th>#</th><th>単語・拼音</th><th>日本語訳</th><th>例文</th></tr></thead><tbody>"
         )
@@ -251,17 +257,29 @@ if __name__ == "__main__":
         for j, (word, jp_meaning, jyutping, example_html) in enumerate(entries[i : i + 10]):
             entry_index = i + j + 1
             word_with_jyutping = f"{word}<span class='jyutping'>{jyutping}</span>"
-            word_audio = f"audio/words/word_{entry_index:03d}.mp3"
-            example_audio = f"audio/examples/example_{entry_index:03d}.mp3"
+
+            word_audio_male = f"audio/male/words/word_{entry_index:03d}.mp3"
+            word_audio_female = f"audio/female/words/word_{entry_index:03d}.mp3"
+            example_audio_male = f"audio/male/examples/example_{entry_index:03d}.mp3"
+            example_audio_female = f"audio/female/examples/example_{entry_index:03d}.mp3"
 
             html_parts.append(
                 f"<tr>"
                 f"<td>{entry_index:03d}</td>"
-                f"<td><div class='audio-text'><button class='audio-button custom-audio-button' data-src='{word_audio}'>🔊</button><div>{word_with_jyutping}</div></div></td>"
+                f"<td><div class='audio-text'>"
+                f"<div class='audio-buttons-column'>"
+                f"<button class='audio-button custom-audio-button' data-src='{word_audio_male}' title='男性音声'>👨‍🦱</button>"
+                f"<button class='audio-button custom-audio-button' data-src='{word_audio_female}' title='女性音声'>👩</button>"
+                f"</div><div>{word_with_jyutping}</div></div></td>"
                 f"<td>{jp_meaning}</td>"
-                f"<td><div class='audio-text'><button class='audio-button custom-audio-button' data-src='{example_audio}'>🔊</button><div>{example_html}</div></div></td>"
+                f"<td><div class='audio-text'>"
+                f"<div class='audio-buttons-column'>"
+                f"<button class='audio-button custom-audio-button' data-src='{example_audio_male}' title='男性音声'>👨‍🦱</button>"
+                f"<button class='audio-button custom-audio-button' data-src='{example_audio_female}' title='女性音声'>👩</button>"
+                f"</div><div>{example_html}</div></div></td>"
                 f"</tr>"
             )
+
 
         html_parts.append("</tbody></table></div>")
 
