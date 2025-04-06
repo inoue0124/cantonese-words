@@ -81,7 +81,7 @@ if __name__ == "__main__":
     .audio-button { cursor: pointer; background: none; border: none; font-size: 1.2rem; color: #e11d48; transition: transform 0.2s; padding-left: 0; }
     .audio-button:hover { transform: scale(1.2); }
     .hidden-cell { opacity: 0; pointer-events: auto; }
-    .toggle-word, .toggle-meaning { cursor: pointer; }
+    .toggle-word, .toggle-meaning, .toggle-jyutping { cursor: pointer; }
     .seg-button {
     background: #f3f4f6;
     border: 1px solid #ccc;
@@ -129,13 +129,22 @@ if __name__ == "__main__":
     }
     function toggleSectionVisibility(button, className) {
         const section = button.closest('.section');
-        const targets = section.querySelectorAll('.toggle-' + className);
-        targets.forEach(el => el.classList.toggle('hidden-cell'));
+        const targets = section.querySelectorAll('.toggle-' + className + ', .' + className);
+        if (targets.length === 0) return;
+
+        // 1つでも非表示があれば「表示」、全て表示中なら「非表示」に切り替える
+        const shouldHide = !Array.from(targets).some(el => el.classList.contains("hidden-cell"));
+
+        targets.forEach(el => {
+            if (shouldHide) {
+                el.classList.add("hidden-cell");
+            } else {
+                el.classList.remove("hidden-cell");
+            }
+        });
     }
     function toggleSelf(el) {
-        if (el.classList.contains("hidden-cell")) {
-            el.classList.remove("hidden-cell");
-        }
+        el.classList.toggle("hidden-cell");
     }
     function saveCheckboxState() {
         const checkboxes = document.querySelectorAll(".check-word");
@@ -252,6 +261,7 @@ if __name__ == "__main__":
             f'<audio class="audio-player" controls src="{audio_file_female}" title="女性バッチ音声"></audio></div>'
             f'<div class="section-controls">'
             f'<button class="control-button" onclick="toggleSectionVisibility(this, \'word\')">📘 単語切替</button>'
+            f'<button class="control-button" onclick="toggleSectionVisibility(this, \'jyutping\')">🈺 拼音切替</button>'
             f'<button class="control-button" onclick="toggleSectionVisibility(this, \'meaning\')">🈶 日本語訳切替</button>'
             f'<button class="control-button" onclick="clearAllChecks(false, this.closest(\'.section\'))">☑ セクションチェック解除</button>'
             f'</div>'
@@ -262,7 +272,7 @@ if __name__ == "__main__":
 
         for j, (word, jp_meaning, jyutping, example_html) in enumerate(entries[i:i+10]):
             entry_index = i + j + 1
-            word_with_jyutping = f"{word}<span class='jyutping'>{jyutping}</span>"
+            word_with_jyutping = f"<span class='toggle-word' onclick='toggleSelf(this)'>{word}</span><span class='jyutping toggle-jyutping' onclick='toggleSelf(this)'>{jyutping}</span>"
             word_audio_male = f"audio/male/words/word_{entry_index:03d}.mp3"
             word_audio_female = f"audio/female/words/word_{entry_index:03d}.mp3"
             example_audio_male = f"audio/male/examples/example_{entry_index:03d}.mp3"
@@ -276,7 +286,7 @@ if __name__ == "__main__":
                 f"<td><div class='audio-text'><div class='audio-buttons-column'>"
                 f"<button class='audio-button custom-audio-button' data-src='{word_audio_male}'>👨‍🦱</button>"
                 f"<button class='audio-button custom-audio-button' data-src='{word_audio_female}'>👩</button></div>"
-                f"<div class='toggle-word' onclick='toggleSelf(this)'>{word_with_jyutping}</div></div></td>"
+                f"<div>{word_with_jyutping}</div></div></td>"
                 f"<td><div class='toggle-meaning' onclick='toggleSelf(this)'>{jp_meaning}</div></td>"
                 f"<td><div class='audio-text'><div class='audio-buttons-column'>"
                 f"<button class='audio-button custom-audio-button' data-src='{example_audio_male}'>👨‍🦱</button>"
