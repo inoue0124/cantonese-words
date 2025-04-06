@@ -61,7 +61,6 @@ if __name__ == "__main__":
     .page-header { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.04); }
     .page-header h2 { font-size: 1.4rem; color: #333; margin-bottom: 1rem; }
     .page-header ul { margin-bottom: 1rem; color: #444; }
-    .download-button { display: inline-block; padding: 6px 12px; font-size: 1rem; background-color: #e11d48; color: white; border-radius: 6px; text-decoration: none; }
     .search-bar { padding: 0.5rem 0; margin: 0 auto 1.5rem auto; }
     .sticky-search { position: sticky; top: 0; background-color: #f9fafb; z-index: 100; }
     input[type="text"] { padding: 16px; width: -webkit-fill-available; border: 0.5px solid #ccc; border-radius: 6px; font-size: 1.2rem; }
@@ -69,11 +68,12 @@ if __name__ == "__main__":
     .section-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #555; }
     .section-header { padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #ddd; }
     .section-controls { margin: 1.2rem 0; }
-    .control-button { background-color: #f9fafb; border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; margin-right: 0.5rem; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; transition: background 0.2s; }
+    .control-button { background-color: #f9fafb; border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; margin-right: 0.5rem; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; transition: background 0.2s; text-decoration: none; color: #111; }
     .control-button:hover { background-color: #e5e7eb; }
     table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; }
     th, td { padding: 1.2rem 1rem; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
     td:nth-child(2) { font-weight: bold; color: #e11d48; font-size: 1.5rem; white-space: nowrap; }
+    td:nth-child(4) { width: 50%; }
     .jyutping { font-size: 0.8rem; color: #e11d48; display: block; margin-top: 0.2rem; }
     .jyutping-line { font-size: 0.8rem; color: #666; margin-top: 0.2rem; letter-spacing: 1px; }
     .translation { margin-top: 0.3rem; font-size: 1rem; color: #333; }
@@ -82,6 +82,34 @@ if __name__ == "__main__":
     .audio-button:hover { transform: scale(1.2); }
     .hidden-cell { opacity: 0; pointer-events: auto; }
     .toggle-word, .toggle-meaning { cursor: pointer; }
+    .seg-button {
+    background: #f3f4f6;
+    border: 1px solid #ccc;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    outline: none;
+    transition: background 0.2s;
+    border-right: none;
+    }
+    .seg-button:last-child {
+    border-right: 1px solid #ccc;
+    border-radius: 0 6px 6px 0;
+    }
+    .seg-button:first-child {
+    border-radius: 6px 0 0 6px;
+    }
+    .seg-button.active {
+    background: #e11d48;
+    color: white;
+    font-weight: bold;
+    }
+    .seg-button:hover {
+    background: #e5e7eb;
+    }
+    .seg-button.active:hover {
+    background: #e11d48;
+    }
     </style>
     <script>
     function filterEntries() {
@@ -160,6 +188,26 @@ if __name__ == "__main__":
             });
         });
     });
+    function filterByCheck(type, buttonEl) {
+        const rows = document.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+            const checkbox = row.querySelector(".check-word");
+            if (!checkbox) return;
+
+            if (type === 'checked' && checkbox.checked) {
+                row.style.display = "";
+            } else if (type === 'unchecked' && !checkbox.checked) {
+                row.style.display = "";
+            } else if (type === 'all') {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+                  
+        document.querySelectorAll(".seg-button").forEach(btn => btn.classList.remove("active"));
+        if (buttonEl) buttonEl.classList.add("active");
+    };
     document.addEventListener("DOMContentLoaded", () => {
         loadCheckboxState();
         document.querySelectorAll(".check-word").forEach(cb => {
@@ -170,17 +218,21 @@ if __name__ == "__main__":
     </head>
     <body>
     <div class="page-header">
-    <h2>このページの使い方</h2>
-    <ul>
-        <li>📘 単語表示切替ボタンで単語表示をまとめて切り替え</li>
-        <li>🈶 日本語訳表示切替ボタンで訳の表示をまとめて切り替え</li>
-        <li>✔ チェックボックスで「覚えた単語」を管理（保存されます）</li>
-    </ul>
-    <a href="download/audio.zip" download class="download-button">📥 音声ファイルDL</a>
-    <button class="control-button" onclick="clearAllChecks(true)">☑ 全チェック解除</button>
+        <h2>このページの使い方</h2>                  
+        <div>📘 単語表示切替ボタンで単語表示をまとめて切り替え</div>
+        <div>🈶 日本語訳表示切替ボタンで訳の表示をまとめて切り替え</div>
+        <div style="margin-bottom: 1.2rem;">✔ チェックボックスで「覚えた単語」を管理（保存されます）</div>
+        <a href="download/audio.zip" download class="control-button">📥 音声ダウンロード</a>
+        <button class="control-button" onclick="clearAllChecks(true)">☑ 全チェック解除</button>
+        <div class="segmented-control" style="display: inline-flex; gap: 0; margin-bottom: 1.5rem;">
+        <button class="seg-button active" onclick="filterByCheck('all', this)">🔄 すべて</button>
+        <button class="seg-button" onclick="filterByCheck('checked', this)">✔ あり</button>
+        <button class="seg-button" onclick="filterByCheck('unchecked', this)">✔ なし</button>
+        </div>
+    </div>
     </div>
     <div class="search-bar sticky-search">
-    <input type="text" id="search" oninput="filterEntries()" placeholder="単語・読み・意味・例文で検索...">
+        <input type="text" id="search" oninput="filterEntries()" placeholder="単語・読み・意味・例文で検索...">
     </div>
     """]
 
