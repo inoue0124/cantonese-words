@@ -1,14 +1,11 @@
-import os
 import re
 from pycantonese import characters_to_jyutping
 
 input_path = "output_file.txt"
 output_path = "index.html"
 
-
 def remove_english_from_japanese(text):
     return re.sub(r'[（(][a-zA-Z0-9\s　.,;:/!?\-\'"()&【】]+[)）]', "", text).strip()
-
 
 def convert_sentence_with_jyutping(sentence):
     chars = []
@@ -16,9 +13,7 @@ def convert_sentence_with_jyutping(sentence):
     for char, jyut in characters_to_jyutping(sentence):
         chars.append(char)
         jyuts.append(jyut if jyut else " ")
-
     return "".join(chars), " ".join(jyuts)
-
 
 def extract_word_and_example(cols):
     word = re.sub(r"[（(][^）)]+[)）]", "", cols[0]).strip()
@@ -32,7 +27,6 @@ def extract_word_and_example(cols):
 
     hanzi, jyut = convert_sentence_with_jyutping(chinese_part)
 
-    # HTML構造をしっかり分離
     example_html = (
         f"<div class='example-block'>"
         f"<div class='hanzi'>{hanzi}</div>"
@@ -40,9 +34,7 @@ def extract_word_and_example(cols):
         f"<div class='translation'>{jp_translation}</div>"
         f"</div>"
     )
-
     return word, jp_meaning, jyutping, example_html
-
 
 if __name__ == "__main__":
     with open(input_path, "r", encoding="utf-8") as f:
@@ -58,179 +50,141 @@ if __name__ == "__main__":
         if len(cols) == 4:
             entries.append(extract_word_and_example(cols))
 
-    html_parts = [
-        """<!DOCTYPE html>
-<html lang="ja">
-<head>
+    html_parts = ["""<!DOCTYPE html>
+    <html lang="ja">
+    <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>広東語 単語リスト</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 2rem; color: #111; }
-        .section { margin-bottom: 3rem; }
-        .section-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #555; }
-        table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; table-layout: auto; }
-        th, td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #eee;
-            text-align: left;
-            vertical-align: middle;
-        }
-        th:first-child, td:first-child {
-            width: 30px;
-            color: #888;
-            font-size: 0.8rem;
-        }
-        td:nth-child(2) {
-            font-weight: bold;
-            color: #e11d48;
-            white-space: nowrap;
-            font-size: 1.5rem;
-        }
-        td:nth-child(3) { color: #555; }
-        td:nth-child(4) {
-            width: 50%;
-            color: #333;
-            font-size: 1.1rem;
-        }
-        .jyutping {
-            font-size: 0.8rem;
-            color: #e11d48;
-            display: block;
-            margin-top: 0.2rem;
-        }
-        .jyutping-line {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 0.2rem;
-            letter-spacing: 1px;
-        }
-        .translation {
-            margin-top: 0.3rem;
-            font-size: 1rem;
-            color: #333;
-        }
-        .example-block {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
-        }
-        .audio-player { margin-bottom: 1rem; }
-        .search-bar { margin-bottom: 2rem; width: 100%; }
-        input[type="text"] { padding: 16px; width: -webkit-fill-available; border: 0.5px solid #ccc; border-radius: 6px; font-size: 1.2rem; }
-        .section-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-        .audio-button {
-            cursor: pointer;
-            border: none;
-            background: none;
-            font-size: 1.2rem;
-            color: #e11d48;
-            transition: transform 0.2s;
-        }
-        .audio-button:hover {
-            transform: scale(1.2);
-        }
-        .audio-text {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .audio-buttons-column {
-            display: flex;
-            flex-direction: column;
-            gap: 0.2rem;
-            margin-right: 0.5rem;
-        }
-
-        @media print {
-            body {
-                background: white;
-                margin: 0.5cm;
-                font-size: 10pt;
-                line-height: 1.2;
-            }
-
-            .search-bar,
-            .audio-player,
-            .custom-audio-button,
-            .audio-button,
-            .section-header audio,
-            button,
-            a[href$=".zip"] {
-                display: none !important;
-            }
-
-            .section {
-                margin-bottom: 1rem;
-            }
-
-            /* 印刷のときだけページの下で途切れないように */
-            tr, td {
-                page-break-inside: avoid;
-            }
-        }
-
-
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f9fafb; margin: 2rem; color: #111; }
+    .page-header { background: #fff; border: 1px solid #eee; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 5px rgba(0,0,0,0.04); }
+    .page-header h2 { font-size: 1.4rem; color: #333; margin-bottom: 1rem; }
+    .page-header ul { margin-bottom: 1rem; color: #444; }
+    .download-button { display: inline-block; padding: 6px 12px; font-size: 1rem; background-color: #e11d48; color: white; border-radius: 6px; text-decoration: none; }
+    .search-bar { padding: 0.5rem 0; margin: 0 auto 1.5rem auto; }
+    .sticky-search { position: sticky; top: 0; background-color: #f9fafb; z-index: 100; }
+    input[type="text"] { padding: 16px; width: -webkit-fill-available; border: 0.5px solid #ccc; border-radius: 6px; font-size: 1.2rem; }
+    .section { margin-bottom: 3rem; }
+    .section-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 1rem; color: #555; }
+    .section-header { padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #ddd; }
+    .section-controls { margin: 1.2rem 0; }
+    .control-button { background-color: #f9fafb; border: 1px solid #ccc; border-radius: 6px; padding: 6px 12px; margin-right: 0.5rem; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 0.4rem; cursor: pointer; transition: background 0.2s; }
+    .control-button:hover { background-color: #e5e7eb; }
+    table { width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 1.2rem 1rem; border-bottom: 1px solid #eee; text-align: left; vertical-align: middle; }
+    td:nth-child(2) { font-weight: bold; color: #e11d48; font-size: 1.5rem; white-space: nowrap; }
+    .jyutping { font-size: 0.8rem; color: #e11d48; display: block; margin-top: 0.2rem; }
+    .jyutping-line { font-size: 0.8rem; color: #666; margin-top: 0.2rem; letter-spacing: 1px; }
+    .translation { margin-top: 0.3rem; font-size: 1rem; color: #333; }
+    .example-block { display: flex; flex-direction: column; gap: 0.4rem; }
+    .audio-button { cursor: pointer; background: none; border: none; font-size: 1.2rem; color: #e11d48; transition: transform 0.2s; padding-left: 0; }
+    .audio-button:hover { transform: scale(1.2); }
+    .hidden-cell { opacity: 0; pointer-events: auto; }
+    .toggle-word, .toggle-meaning { cursor: pointer; }
     </style>
     <script>
-        function filterEntries() {
-            const keyword = document.getElementById("search").value.toLowerCase();
-            const sections = document.querySelectorAll(".section");
-            sections.forEach(section => {
-                const rows = section.querySelectorAll("tbody tr");
-                let visibleCount = 0;
-                rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    const match = text.includes(keyword);
-                    row.style.display = match ? "" : "none";
-                    if (match) visibleCount++;
-                });
-                section.style.display = visibleCount > 0 ? "" : "none";
+    function filterEntries() {
+        const keyword = document.getElementById("search").value.toLowerCase();
+        const sections = document.querySelectorAll(".section");
+        sections.forEach(section => {
+            const rows = section.querySelectorAll("tbody tr");
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                const match = text.includes(keyword);
+                row.style.display = match ? "" : "none";
+                if (match) visibleCount++;
             });
+            section.style.display = visibleCount > 0 ? "" : "none";
+        });
+    }
+    function toggleSectionVisibility(button, className) {
+        const section = button.closest('.section');
+        const targets = section.querySelectorAll('.toggle-' + className);
+        targets.forEach(el => el.classList.toggle('hidden-cell'));
+    }
+    function toggleSelf(el) {
+        if (el.classList.contains("hidden-cell")) {
+            el.classList.remove("hidden-cell");
         }
-        document.addEventListener("DOMContentLoaded", () => {
-            const audio = new Audio();
-            let currentBtn = null;
-            document.querySelectorAll(".custom-audio-button").forEach(button => {
-                button.addEventListener("click", () => {
-                    const src = button.dataset.src;
-                    if (audio.src !== location.href + src) audio.src = src;
-
-                    if (audio.paused || currentBtn !== button) {
-                        audio.play();
-                        if (currentBtn) currentBtn.classList.remove("playing");
-                        button.classList.add("playing");
-                        currentBtn = button;
-                    } else {
-                        audio.pause();
-                        audio.currentTime = 0;
-                        button.classList.remove("playing");
-                        currentBtn = null;
-                    }
-
-                    audio.onended = () => {
-                        if (currentBtn) currentBtn.classList.remove("playing");
-                        currentBtn = null;
-                    };
-                });
+    }
+    function saveCheckboxState() {
+        const checkboxes = document.querySelectorAll(".check-word");
+        const checkedStates = {};
+        checkboxes.forEach(cb => {
+            checkedStates[cb.dataset.index] = cb.checked;
+        });
+        localStorage.setItem("wordChecks", JSON.stringify(checkedStates));
+    }
+    function loadCheckboxState() {
+        const data = localStorage.getItem("wordChecks");
+        if (!data) return;
+        const checkedStates = JSON.parse(data);
+        document.querySelectorAll(".check-word").forEach(cb => {
+            if (checkedStates[cb.dataset.index]) {
+                cb.checked = true;
+            }
+        });
+    }
+    function clearAllChecks(confirmAll = false, section = null) {
+        if (confirmAll) {
+            if (!confirm("すべてのチェックを解除しますか？")) return;
+        }
+        const selector = section ? section.querySelectorAll(".check-word") : document.querySelectorAll(".check-word");
+        selector.forEach(cb => cb.checked = false);
+        saveCheckboxState();
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+        const audio = new Audio();
+        let currentBtn = null;
+        document.querySelectorAll(".custom-audio-button").forEach(button => {
+            button.addEventListener("click", () => {
+                const src = button.dataset.src;
+                if (audio.src !== location.href + src) audio.src = src;
+                if (audio.paused || currentBtn !== button) {
+                    audio.play();
+                    if (currentBtn) currentBtn.classList.remove("playing");
+                    button.classList.add("playing");
+                    currentBtn = button;
+                } else {
+                    audio.pause();
+                    audio.currentTime = 0;
+                    button.classList.remove("playing");
+                    currentBtn = null;
+                }
+                audio.onended = () => {
+                    if (currentBtn) currentBtn.classList.remove("playing");
+                    currentBtn = null;
+                };
             });
         });
+    });
+    document.addEventListener("DOMContentLoaded", () => {
+        loadCheckboxState();
+        document.querySelectorAll(".check-word").forEach(cb => {
+            cb.addEventListener("change", saveCheckboxState);
+        });
+    });
     </script>
-</head>
-<body>
-    <div class="search-bar">
-        <input type="text" id="search" oninput="filterEntries()" placeholder="単語・読み・意味・例文で検索...">
+    </head>
+    <body>
+    <div class="page-header">
+    <h2>このページの使い方</h2>
+    <ul>
+        <li>📘 単語表示切替ボタンで単語表示をまとめて切り替え</li>
+        <li>🈶 日本語訳表示切替ボタンで訳の表示をまとめて切り替え</li>
+        <li>✔ チェックボックスで「覚えた単語」を管理（保存されます）</li>
+    </ul>
+    <a href="download/audio.zip" download class="download-button">📥 音声ファイルDL</a>
+    <button class="control-button" onclick="clearAllChecks(true)">☑ 全チェック解除</button>
     </div>
-    <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
-        <a href="download/audio.zip" download style="padding: 10px 20px; font-size: 1rem; background-color: #e11d48; color: white; border-radius: 6px; text-decoration: none;">📥 音声ファイルDL</a>
-    </div>"""
-    ]
+    <div class="search-bar sticky-search">
+    <input type="text" id="search" oninput="filterEntries()" placeholder="単語・読み・意味・例文で検索...">
+    </div>
+    """]
 
+    # ========== セクション出力 ==========
     total_sections = (len(entries) + 9) // 10
 
     for i in range(0, len(entries), 10):
@@ -239,25 +193,24 @@ if __name__ == "__main__":
         audio_file_male = f"audio/male/batch/output_batch_{section_index}.mp3"
         audio_file_female = f"audio/female/batch/output_batch_{section_index}.mp3"
 
-        html_parts.append(f'<div class="section">')
         html_parts.append(
-            f"""
-        <div class="section-header">
-            <div class="section-title">{section_title}</div>
-            <audio class="audio-player" controls src="{audio_file_male}" title="男性バッチ音声"></audio>
-            <audio class="audio-player" controls src="{audio_file_female}" title="女性バッチ音声"></audio>
-        </div>
-        """
+            f'<div class="section">'
+            f'<div class="section-header"><div class="section-title">{section_title}</div>'
+            f'<audio class="audio-player" controls src="{audio_file_male}" title="男性バッチ音声"></audio>'
+            f'<audio class="audio-player" controls src="{audio_file_female}" title="女性バッチ音声"></audio></div>'
+            f'<div class="section-controls">'
+            f'<button class="control-button" onclick="toggleSectionVisibility(this, \'word\')">📘 単語切替</button>'
+            f'<button class="control-button" onclick="toggleSectionVisibility(this, \'meaning\')">🈶 日本語訳切替</button>'
+            f'<button class="control-button" onclick="clearAllChecks(false, this.closest(\'.section\'))">☑ セクションチェック解除</button>'
+            f'</div>'
+            f'<table><thead><tr>'
+            f'<th style="width:4rem;">#</th><th>単語・拼音</th><th>日本語訳</th><th>例文</th>'
+            f'</tr></thead><tbody>'
         )
 
-        html_parts.append(
-            "<table><thead><tr><th>#</th><th>単語・拼音</th><th>日本語訳</th><th>例文</th></tr></thead><tbody>"
-        )
-
-        for j, (word, jp_meaning, jyutping, example_html) in enumerate(entries[i : i + 10]):
+        for j, (word, jp_meaning, jyutping, example_html) in enumerate(entries[i:i+10]):
             entry_index = i + j + 1
             word_with_jyutping = f"{word}<span class='jyutping'>{jyutping}</span>"
-
             word_audio_male = f"audio/male/words/word_{entry_index:03d}.mp3"
             word_audio_female = f"audio/female/words/word_{entry_index:03d}.mp3"
             example_audio_male = f"audio/male/examples/example_{entry_index:03d}.mp3"
@@ -265,26 +218,34 @@ if __name__ == "__main__":
 
             html_parts.append(
                 f"<tr>"
-                f"<td>{entry_index:03d}</td>"
-                f"<td><div class='audio-text'>"
-                f"<div class='audio-buttons-column'>"
-                f"<button class='audio-button custom-audio-button' data-src='{word_audio_male}' title='男性音声'>👨‍🦱</button>"
-                f"<button class='audio-button custom-audio-button' data-src='{word_audio_female}' title='女性音声'>👩</button>"
-                f"</div><div>{word_with_jyutping}</div></div></td>"
-                f"<td>{jp_meaning}</td>"
-                f"<td><div class='audio-text'>"
-                f"<div class='audio-buttons-column'>"
-                f"<button class='audio-button custom-audio-button' data-src='{example_audio_male}' title='男性音声'>👨‍🦱</button>"
-                f"<button class='audio-button custom-audio-button' data-src='{example_audio_female}' title='女性音声'>👩</button>"
-                f"</div><div>{example_html}</div></div></td>"
-                f"</tr>"
+                f"<td><div style='display:flex; align-items:center; gap:0.5rem;'>"
+                f"<input type='checkbox' class='check-word' data-index='{entry_index:03d}'>"
+                f"<span>{entry_index:03d}</span></div></td>"
+                f"<td><div class='audio-text'><div class='audio-buttons-column'>"
+                f"<button class='audio-button custom-audio-button' data-src='{word_audio_male}'>👨‍🦱</button>"
+                f"<button class='audio-button custom-audio-button' data-src='{word_audio_female}'>👩</button></div>"
+                f"<div class='toggle-word' onclick='toggleSelf(this)'>{word_with_jyutping}</div></div></td>"
+                f"<td><div class='toggle-meaning' onclick='toggleSelf(this)'>{jp_meaning}</div></td>"
+                f"<td><div class='audio-text'><div class='audio-buttons-column'>"
+                f"<button class='audio-button custom-audio-button' data-src='{example_audio_male}'>👨‍🦱</button>"
+                f"<button class='audio-button custom-audio-button' data-src='{example_audio_female}'>👩</button></div>"
+                f"<div class='example-block'>{example_html}</div></div></td></tr>"
             )
 
+        html_parts.append("</tbody></table>")
+        html_parts.append(
+            f'<div class="section-controls">'
+            f'<button class="control-button" onclick="toggleSectionVisibility(this, \'word\')">📘 単語切替</button>'
+            f'<button class="control-button" onclick="toggleSectionVisibility(this, \'meaning\')">🈶 日本語訳切替</button>'
+            f'<button class="control-button" onclick="clearAllChecks(false, this.closest(\'.section\'))">☑ セクションチェック解除</button>'
+            f'</div>'
+            f'</div>'
+        )
 
-        html_parts.append("</tbody></table></div>")
+    # 終了
+    html_parts.append("</body></html>")
 
-    html_parts.append("</body>\n</html>")
-
+    # 書き出し
     with open(output_path, "w", encoding="utf-8") as f:
         f.write("\n".join(html_parts))
 
